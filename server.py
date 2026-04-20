@@ -225,42 +225,42 @@ class Server(object):
 
 
     def eval_acc(self, cur_round):
-    self.model = self.model.to(self.device)
-    self.model.eval()
+        self.model = self.model.to(self.device)
+        self.model.eval()
 
-    progress_bar_eval = tqdm(range(len(self.eval_loader)))
+        progress_bar_eval = tqdm(range(len(self.eval_loader)))
 
-    all_preds = None
-    gt_labels = []
+        all_preds = None
+        gt_labels = []
 
-    with torch.inference_mode():
-        for batch in self.eval_loader:
-            outs = self.model(
-                input_ids=batch['input_ids'].to(self.device),
-                attention_mask=batch['attention_mask'].to(self.device)
-            )
+        with torch.inference_mode():
+            for batch in self.eval_loader:
+                outs = self.model(
+                    input_ids=batch['input_ids'].to(self.device),
+                    attention_mask=batch['attention_mask'].to(self.device)
+                )
 
-            gt_labels.append(batch['answer'][0])
+                gt_labels.append(batch['answer'][0])
 
-            shift_logits = outs.logits[..., :-1, :].contiguous()
-            shift_labels = batch['labels'][..., 1:].to(self.device).contiguous()
+                shift_logits = outs.logits[..., :-1, :].contiguous()
+                shift_labels = batch['labels'][..., 1:].to(self.device).contiguous()
 
-            loss_fct = CrossEntropyLoss(reduction='none')
-            loss = loss_fct(
+                loss_fct = CrossEntropyLoss(reduction='none')
+                loss = loss_fct(
                 shift_logits.view(-1, shift_logits.size(-1)),
                 shift_labels.view(-1)
-            ).view_as(shift_labels)
+                ).view_as(shift_labels)
 
-            loss = loss.mean(dim=1)
-            group_loss = loss.split(batch['split_size'])
+                loss = loss.mean(dim=1)
+                group_loss = loss.split(batch['split_size'])
 
-            preds = torch.stack([torch.argmin(l) for l in group_loss], dim=0)
+                preds = torch.stack([torch.argmin(l) for l in group_loss], dim=0)
 
-            preds = nested_numpify(preds).tolist()
-            all_preds = preds if all_preds is None else all_preds + preds
+                preds = nested_numpify(preds).tolist()
+                all_preds = preds if all_preds is None else all_preds + preds
 
-            progress_bar_eval.update(1)
+                progress_bar_eval.update(1)
 
-    self.model = self.model.cpu()
+        self.model = self.model.cpu()
 
-    return acc_score(all_preds, gt_labels)
+        return acc_score(all_preds, gt_labels)
