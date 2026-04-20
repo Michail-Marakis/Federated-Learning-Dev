@@ -18,6 +18,9 @@ def get_flatten_features(model, data_loader, args):
             outputs = model(**batch, output_hidden_states=True)
 
             tmp_hidden_state = []
+            if outputs.hidden_states is None:
+                raise RuntimeError("hidden_states is None → model.config.output_hidden_states not set")
+
             for idx_layer in range(len(outputs.hidden_states)):
                 hidden_state_cur_layer = torch.squeeze(outputs.hidden_states[idx_layer])
 
