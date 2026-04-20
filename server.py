@@ -125,6 +125,7 @@ class Server(object):
                 if 'final' in file_name:
                     os.remove(os.path.join(save_dir, file_name)) 
             torch.save(self.model.state_dict(), os.path.join(save_dir, f'model_state_dict_final_round{cur_round}.bin'))
+        eval_avg_acc.append(eval_metric)
         return eval_metric
     
     
