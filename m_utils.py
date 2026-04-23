@@ -12,7 +12,6 @@ def get_flatten_features(model, data_loader, args):
         for batch in data_loader:
             batch = {
                 'input_ids': batch['input_ids'].cuda(),
-                'labels': batch['labels'].cuda(),
                 'attention_mask': batch['attention_mask'].cuda()
             }
 
