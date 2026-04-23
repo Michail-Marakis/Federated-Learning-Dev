@@ -116,11 +116,13 @@ class Server(object):
 
         else:
             eval_metric = self.eval_generate(cur_round)
-            metric_type = self.args.generate_eval  
+            metric_type = self.args.generate_eval  # rouge / bleu
 
     # ===== LOGGING =====
-         eval_avg_acc.append(eval_metric)
-         if metric_type == "rouge":
+        eval_avg_acc.append(eval_metric)
+
+    # ===== ROUGE LOG =====
+        if metric_type == "rouge":
             if not hasattr(self, "eval_rouge_history"):
                 self.eval_rouge_history = []
 
@@ -131,6 +133,7 @@ class Server(object):
                     "eval_rouge": self.eval_rouge_history,
                     "final_eval_rouge": self.eval_rouge_history[-1]
                 }, f)
+
     # ===== SAVE =====
         if self.args.save and cur_round > 0:
 
@@ -138,11 +141,10 @@ class Server(object):
             os.makedirs(save_dir, exist_ok=True)
 
             if len(eval_avg_acc) > 1:
-
                 is_best = (
-                (metric_type == "loss" and eval_metric < np.min(eval_avg_acc))
-                or
-                (metric_type != "loss" and eval_metric > np.max(eval_avg_acc))
+                    (metric_type == "loss" and eval_metric < np.min(eval_avg_acc))
+                    or
+                    (metric_type != "loss" and eval_metric > np.max(eval_avg_acc))
                 )
 
                 if is_best:
@@ -151,8 +153,8 @@ class Server(object):
                             os.remove(os.path.join(save_dir, file_name))
 
                     torch.save(
-                    self.model.state_dict(),
-                    os.path.join(save_dir, f'model_best_round{cur_round}.bin')
+                        self.model.state_dict(),
+                        os.path.join(save_dir, f'model_best_round{cur_round}.bin')
                     )
 
             for file_name in os.listdir(save_dir):
@@ -160,8 +162,8 @@ class Server(object):
                     os.remove(os.path.join(save_dir, file_name))
 
             torch.save(
-            self.model.state_dict(),
-            os.path.join(save_dir, f'model_final_round{cur_round}.bin')
+                self.model.state_dict(),
+                os.path.join(save_dir, f'model_final_round{cur_round}.bin')
             )
 
         return eval_metric, metric_type
