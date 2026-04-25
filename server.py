@@ -226,26 +226,31 @@ class Server(object):
     def eval_generate(self, cur_round):
         self.model = self.model.to(self.device)
         self.model.eval()
-        
+    
         progress_bar_eval = tqdm(range(len(self.eval_loader)))
-        acc_total_eval = 0.0
-        num_eval = 0
-        
+
+        score_total = 0.0   # ✅ FIX 1
+        num_samples = 0     # ✅ FIX 2
+
         with torch.inference_mode():
             for batch in self.eval_loader:
                 input_ids = batch['input_ids'].to(self.device)
                 label_ids = batch['labels'].to(self.device)
+
                 output_ids = self.model.generate(
-                    input_ids=input_ids,
-                    max_new_tokens=128,
-                    num_beams=1,
+                input_ids=input_ids,
+                max_new_tokens=128,
+                num_beams=1,
                 )
+
                 pred = output_ids[0][len(input_ids[0]):]
                 label = label_ids[0]
+
                 if self.args.generate_eval == 'rouge':
-                        score = rouge_score(pred, label, self.tokenizer)
+                    score = rouge_score(pred, label, self.tokenizer)
                 else:
-                        score = bleu_score(pred, label, self.tokenizer)
+                    score = bleu_score(pred, label, self.tokenizer)
+
                 score_total += score
                 num_samples += 1
 
